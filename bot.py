@@ -21,11 +21,11 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 @bot.event
 async def on_member_join(member):
     channel = member.guild.system_channel
-
     if channel:
         await channel.send(
-            f"✨ Welcome to **{member.guild.name}**, {member.mention}! 🎉\n"
-            f"We're glad to have you here. Make sure to check the rules and grab your roles!"
+            f"✨ Welcome to **{member.guild.name}**, {member.mention}!\n"
+            f"We're excited to have you here! 🎉\n"
+            f"Make sure to read the rules and grab your roles!"
         )
 
 # ========================
@@ -35,11 +35,10 @@ async def on_member_join(member):
 @bot.command()
 @commands.has_permissions(moderate_members=True)
 async def mute(ctx, member: discord.Member, minutes: int, *, reason="No reason provided"):
+    await ctx.message.delete()
+
     duration = timedelta(minutes=minutes)
-
     await member.timeout(discord.utils.utcnow() + duration, reason=reason)
-
-    await ctx.send(f"🔇 {member.mention} has been muted for {minutes} minutes.")
 
     log_channel = bot.get_channel(LOG_CHANNEL_ID)
 
@@ -68,7 +67,7 @@ async def mute(ctx, member: discord.Member, minutes: int, *, reason="No reason p
 @bot.command()
 @commands.has_permissions(moderate_members=True)
 async def warn(ctx, member: discord.Member, *, reason="No reason provided"):
-    await ctx.send(f"⚠️ {member.mention} has been warned.")
+    await ctx.message.delete()
 
     log_channel = bot.get_channel(LOG_CHANNEL_ID)
 
@@ -89,7 +88,47 @@ async def warn(ctx, member: discord.Member, *, reason="No reason provided"):
         pass
 
 # ========================
-# 🔹 Авто-реакция в канале roles
+# 🔹 Kick
+# ========================
+
+@bot.command()
+@commands.has_permissions(kick_members=True)
+async def kick(ctx, member: discord.Member, *, reason="No reason provided"):
+    await ctx.message.delete()
+
+    await member.kick(reason=reason)
+
+    log_channel = bot.get_channel(LOG_CHANNEL_ID)
+    if log_channel:
+        await log_channel.send(
+            f"👢 **User Kicked**\n"
+            f"👤 User: {member}\n"
+            f"👮 Moderator: {ctx.author}\n"
+            f"📄 Reason: {reason}"
+        )
+
+# ========================
+# 🔹 Ban
+# ========================
+
+@bot.command()
+@commands.has_permissions(ban_members=True)
+async def ban(ctx, member: discord.Member, *, reason="No reason provided"):
+    await ctx.message.delete()
+
+    await member.ban(reason=reason)
+
+    log_channel = bot.get_channel(LOG_CHANNEL_ID)
+    if log_channel:
+        await log_channel.send(
+            f"⛔ **User Banned**\n"
+            f"👤 User: {member}\n"
+            f"👮 Moderator: {ctx.author}\n"
+            f"📄 Reason: {reason}"
+        )
+
+# ========================
+# 🔹 Авто-реакция
 # ========================
 
 @bot.event
